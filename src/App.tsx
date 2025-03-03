@@ -1,5 +1,8 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+
+// Landing page
+import LandingPage from './pages/LandingPage';
 
 // Admin pages
 import Dashboard from './pages/admin/Dashboard';
@@ -23,8 +26,8 @@ function App() {
         {/* Booking routes */}
         <Route path="/agendar" element={<BookingPage />} />
         
-        {/* Redirect root to booking page for clients */}
-        <Route path="/" element={<Navigate to="/agendar" replace />} />
+        {/* Landing page */}
+        <Route path="/" element={<LandingPage />} />
       </Routes>
     </Router>
   );
