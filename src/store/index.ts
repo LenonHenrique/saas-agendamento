@@ -1,8 +1,8 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
 import { Client, TimeSlot, Appointment } from '../types';
 import { addDays, format, parseISO, isAfter, startOfDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { Storage } from '../lib/storage';
 
 interface BusinessInfo {
   name: string;
@@ -42,9 +42,7 @@ interface AppState {
   getUpcomingAppointments: () => Appointment[];
 }
 
-export const useAppStore = create<AppState>()(
-  persist(
-    (set, get) => ({
+export const useAppStore = create<AppState>()((set, get) => ({
       // Reset store function
       resetStore: () => {
         set({
@@ -64,15 +62,17 @@ export const useAppStore = create<AppState>()(
       },
       
       // Client actions
-      addClient: (clientData) => {
+      addClient: async (clientData) => {
         const client = { ...clientData, id: crypto.randomUUID() };
+        await Storage.addClient(client);
         set((state) => ({
           clients: [...state.clients, client]
         }));
         return client;
       },
       
-      updateClient: (id, clientData) => {
+      updateClient: async (id, clientData) => {
+        await Storage.updateClient(id, clientData);
         set((state) => ({
           clients: state.clients.map((client) => 
             client.id === id ? { ...client, ...clientData } : client
@@ -80,7 +80,8 @@ export const useAppStore = create<AppState>()(
         }));
       },
       
-      deleteClient: (id) => {
+      deleteClient: async (id) => {
+        await Storage.deleteClient(id);
         set((state) => ({
           clients: state.clients.filter((client) => client.id !== id)
         }));
@@ -91,15 +92,17 @@ export const useAppStore = create<AppState>()(
       },
       
       // TimeSlot actions
-      addTimeSlot: (timeSlotData) => {
+      addTimeSlot: async (timeSlotData) => {
         const timeSlot = { ...timeSlotData, id: crypto.randomUUID() };
+        await Storage.addTimeSlot(timeSlot);
         set((state) => ({
           timeSlots: [...state.timeSlots, timeSlot]
         }));
         return timeSlot;
       },
       
-      updateTimeSlot: (id, timeSlotData) => {
+      updateTimeSlot: async (id, timeSlotData) => {
+        await Storage.updateTimeSlot(id, timeSlotData);
         set((state) => ({
           timeSlots: state.timeSlots.map((timeSlot) => 
             timeSlot.id === id ? { ...timeSlot, ...timeSlotData } : timeSlot
@@ -107,7 +110,8 @@ export const useAppStore = create<AppState>()(
         }));
       },
       
-      deleteTimeSlot: (id) => {
+      deleteTimeSlot: async (id) => {
+        await Storage.deleteTimeSlot(id);
         set((state) => ({
           timeSlots: state.timeSlots.filter((timeSlot) => timeSlot.id !== id)
         }));
@@ -137,12 +141,13 @@ export const useAppStore = create<AppState>()(
       },
       
       // Appointment actions
-      createAppointment: (appointmentData) => {
+      createAppointment: async (appointmentData) => {
         const appointment = {
           ...appointmentData,
           id: crypto.randomUUID(),
           createdAt: new Date().toISOString(),
         };
+        await Storage.addAppointment(appointment);
 
         set((state) => {
           // Mark the selected time slot as unavailable
@@ -192,7 +197,8 @@ export const useAppStore = create<AppState>()(
         );
       },
       
-      updateAppointment: (id, appointmentData) => {
+      updateAppointment: async (id, appointmentData) => {
+        await Storage.updateAppointment(id, appointmentData);
         set((state) => ({
           appointments: state.appointments.map((appointment) => 
             appointment.id === id ? { ...appointment, ...appointmentData } : appointment
@@ -248,11 +254,7 @@ export const useAppStore = create<AppState>()(
           return appointment.status === 'scheduled' && isAfter(appointmentDate, today);
         });
       }
-    }),
-    {
-      name: 'eyebrow-design-scheduling-storage'
-    }
-  )
+    })
 );
 
 // Helper function to format dates in Portuguese
