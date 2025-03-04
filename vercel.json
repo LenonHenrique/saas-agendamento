@@ -7,5 +7,11 @@
   "framework": "vite",
   "github": {
     "silent": true
+  },
+  "kv": {
+    "giovanna-beauty": {
+      "type": "kv",
+      "binding": "STORAGE"
+    }
   }
 }
