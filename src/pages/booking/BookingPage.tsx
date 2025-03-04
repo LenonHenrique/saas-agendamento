@@ -179,21 +179,21 @@ const BookingPage: React.FC = () => {
         {!bookingComplete ? (
           <Card>
             <div className="mb-6">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 sm:gap-2">
                 <div className={`flex items-center ${step === 'select-time' ? 'text-pink-600 font-medium' : 'text-gray-500'}`}>
                   <div className="flex-shrink-0 h-8 w-8 rounded-full bg-pink-100 flex items-center justify-center">
                     <span className="text-sm">1</span>
                   </div>
                   <span className="ml-2 text-sm">Horário</span>
                 </div>
-                <div className="flex-grow border-t border-gray-300 mx-2"></div>
+                <div className="hidden sm:block flex-grow border-t border-gray-300"></div>
                 <div className={`flex items-center ${step === 'client-info' ? 'text-pink-600 font-medium' : 'text-gray-500'}`}>
                   <div className="flex-shrink-0 h-8 w-8 rounded-full bg-pink-100 flex items-center justify-center">
                     <span className="text-sm">2</span>
                   </div>
                   <span className="ml-2 text-sm">Dados</span>
                 </div>
-                <div className="flex-grow border-t border-gray-300 mx-2"></div>
+                <div className="hidden sm:block flex-grow border-t border-gray-300"></div>
                 <div className={`flex items-center ${step === 'confirmation' ? 'text-pink-600 font-medium' : 'text-gray-500'}`}>
                   <div className="flex-shrink-0 h-8 w-8 rounded-full bg-pink-100 flex items-center justify-center">
                     <span className="text-sm">3</span>
