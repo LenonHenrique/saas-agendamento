@@ -45,6 +45,10 @@ interface AppState {
   initializeData: () => Promise<void>;
 }
 
+export const formatDatePtBR = (date: string) => {
+  return format(parseISO(date), 'dd/MM/yyyy', { locale: ptBR });
+};
+
 export const useAppStore = create<AppState>()((set, get) => ({
   // Reset store function
   resetStore: async () => {
