@@ -8,10 +8,10 @@
   "github": {
     "silent": true
   },
-  "kv": {
-    "giovanna-beauty": {
-      "type": "kv",
-      "binding": "STORAGE"
+  "kv": [
+    {
+      "binding": "STORAGE",
+      "id": "giovanna-beauty"
     }
-  }
+  ]
 }
