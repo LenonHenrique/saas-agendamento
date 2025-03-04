@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { useAppStore } from './store';
 
 // Landing page
 import LandingPage from './pages/LandingPage';
@@ -14,6 +15,12 @@ import Settings from './pages/admin/Settings';
 import BookingPage from './pages/booking/BookingPage';
 
 function App() {
+  const { initializeData } = useAppStore();
+
+  useEffect(() => {
+    initializeData();
+  }, [initializeData]);
+
   return (
     <Router>
       <Routes>

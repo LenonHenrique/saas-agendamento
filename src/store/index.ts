@@ -40,260 +40,221 @@ interface AppState {
   getAppointmentsByClient: (clientId: string) => Appointment[];
   getAppointmentsByDate: (date: string) => Appointment[];
   getUpcomingAppointments: () => Appointment[];
+  
+  // Data initialization
+  initializeData: () => Promise<void>;
 }
 
 export const useAppStore = create<AppState>()((set, get) => ({
-      // Reset store function
-      resetStore: () => {
-        set({
-          appointments: [],
-          timeSlots: [],
-          clients: []
-        });
-      },
-      clients: [],
-      timeSlots: [],
+  // Reset store function
+  resetStore: async () => {
+    await Storage.resetStore();
+    set({
       appointments: [],
-      businessInfo: {
-        name: 'Giovanna Beauty Design de Sobrancelhas',
-        address: 'Rua Exemplo, 123 - Bairro - Cidade/UF',
-        phone: '5534991122682',
-        workingHours: 'Segunda a Sexta, 9h às 18h'
-      },
+      timeSlots: [],
+      clients: []
+    });
+  },
+  
+  clients: [],
+  timeSlots: [],
+  appointments: [],
+  businessInfo: {
+    name: 'Giovanna Beauty Design de Sobrancelhas',
+    address: 'Rua Exemplo, 123 - Bairro - Cidade/UF',
+    phone: '5534991122682',
+    workingHours: 'Segunda a Sexta, 9h às 18h'
+  },
+  
+  // Initialize data from storage
+  initializeData: async () => {
+    const [clients, timeSlots, appointments] = await Promise.all([
+      Storage.getClients(),
+      Storage.getTimeSlots(),
+      Storage.getAppointments()
+    ]);
+    
+    set({
+      clients,
+      timeSlots,
+      appointments
+    });
+  },
+  
+  // Client actions
+  addClient: async (clientData) => {
+    const client = { ...clientData, id: crypto.randomUUID() };
+    await Storage.addClient(client);
+    set((state) => ({
+      clients: [...state.clients, client]
+    }));
+    return client;
+  },
+  
+  updateClient: async (id, clientData) => {
+    await Storage.updateClient(id, clientData);
+    set((state) => ({
+      clients: state.clients.map((client) => 
+        client.id === id ? { ...client, ...clientData } : client
+      )
+    }));
+  },
+  
+  deleteClient: async (id) => {
+    await Storage.deleteClient(id);
+    set((state) => ({
+      clients: state.clients.filter((client) => client.id !== id)
+    }));
+  },
+  
+  getClient: (id) => {
+    return get().clients.find((client) => client.id === id);
+  },
+  
+  // TimeSlot actions
+  addTimeSlot: async (timeSlotData) => {
+    const timeSlot = { ...timeSlotData, id: crypto.randomUUID() };
+    await Storage.addTimeSlot(timeSlot);
+    set((state) => ({
+      timeSlots: [...state.timeSlots, timeSlot]
+    }));
+    return timeSlot;
+  },
+  
+  updateTimeSlot: async (id, timeSlotData) => {
+    await Storage.updateTimeSlot(id, timeSlotData);
+    set((state) => ({
+      timeSlots: state.timeSlots.map((timeSlot) => 
+        timeSlot.id === id ? { ...timeSlot, ...timeSlotData } : timeSlot
+      )
+    }));
+  },
+  
+  deleteTimeSlot: async (id) => {
+    await Storage.deleteTimeSlot(id);
+    set((state) => ({
+      timeSlots: state.timeSlots.filter((timeSlot) => timeSlot.id !== id)
+    }));
+  },
+  
+  getAvailableTimeSlots: () => {
+    const now = new Date();
+    return get().timeSlots.filter((timeSlot) => {
+      // Parse the date
+      const timeSlotDate = parseISO(timeSlot.date);
       
-      // Client actions
-      addClient: async (clientData) => {
-        const client = { ...clientData, id: crypto.randomUUID() };
-        await Storage.addClient(client);
-        set((state) => ({
-          clients: [...state.clients, client]
-        }));
-        return client;
-      },
+      // Check if the date is today or in the future
+      const isDateValid = isAfter(timeSlotDate, startOfDay(now)) || 
+                         timeSlotDate.toDateString() === now.toDateString();
       
-      updateClient: async (id, clientData) => {
-        await Storage.updateClient(id, clientData);
-        set((state) => ({
-          clients: state.clients.map((client) => 
-            client.id === id ? { ...client, ...clientData } : client
-          )
-        }));
-      },
-      
-      deleteClient: async (id) => {
-        await Storage.deleteClient(id);
-        set((state) => ({
-          clients: state.clients.filter((client) => client.id !== id)
-        }));
-      },
-      
-      getClient: (id) => {
-        return get().clients.find((client) => client.id === id);
-      },
-      
-      // TimeSlot actions
-      addTimeSlot: async (timeSlotData) => {
-        const timeSlot = { ...timeSlotData, id: crypto.randomUUID() };
-        await Storage.addTimeSlot(timeSlot);
-        set((state) => ({
-          timeSlots: [...state.timeSlots, timeSlot]
-        }));
-        return timeSlot;
-      },
-      
-      updateTimeSlot: async (id, timeSlotData) => {
-        await Storage.updateTimeSlot(id, timeSlotData);
-        set((state) => ({
-          timeSlots: state.timeSlots.map((timeSlot) => 
-            timeSlot.id === id ? { ...timeSlot, ...timeSlotData } : timeSlot
-          )
-        }));
-      },
-      
-      deleteTimeSlot: async (id) => {
-        await Storage.deleteTimeSlot(id);
-        set((state) => ({
-          timeSlots: state.timeSlots.filter((timeSlot) => timeSlot.id !== id)
-        }));
-      },
-      
-      getAvailableTimeSlots: () => {
-        const now = new Date();
-        return get().timeSlots.filter((timeSlot) => {
-          // Parse the date
-          const timeSlotDate = parseISO(timeSlot.date);
-          
-          // Check if the date is today or in the future
-          const isDateValid = isAfter(timeSlotDate, startOfDay(now)) || 
-                             timeSlotDate.toDateString() === now.toDateString();
-          
-          // If it's today, check if the time has already passed
-          if (timeSlotDate.toDateString() === now.toDateString()) {
-            const [hours, minutes] = timeSlot.startTime.split(':').map(Number);
-            const timeSlotTime = new Date(timeSlotDate);
-            timeSlotTime.setHours(hours, minutes, 0, 0);
-            
-            return timeSlot.isAvailable && isAfter(timeSlotTime, now);
-          }
-          
-          return timeSlot.isAvailable && isDateValid;
-        });
-      },
-      
-      // Appointment actions
-      createAppointment: async (appointmentData) => {
-        const appointment = {
-          ...appointmentData,
-          id: crypto.randomUUID(),
-          createdAt: new Date().toISOString(),
-        };
-        await Storage.addAppointment(appointment);
-
-        set((state) => {
-          // Mark the selected time slot as unavailable
-          const updatedTimeSlots = state.timeSlots.map((slot) =>
-            slot.id === appointmentData.timeSlotId
-              ? { ...slot, isAvailable: false }
-              : slot
-          );
-
-          // Find and mark the next 30-minute slot as unavailable
-          const selectedSlot = state.timeSlots.find(
-            (slot) => slot.id === appointmentData.timeSlotId
-          );
-          if (selectedSlot) {
-            const nextSlot = state.timeSlots.find(
-              (slot) =>
-                slot.date === selectedSlot.date &&
-                slot.startTime === selectedSlot.endTime
-            );
-            if (nextSlot) {
-              updatedTimeSlots.forEach((slot) => {
-                if (slot.id === nextSlot.id) {
-                  slot.isAvailable = false;
-                }
-              });
-            }
-          }
-
-          return {
-            appointments: [...state.appointments, appointment],
-            timeSlots: updatedTimeSlots,
-          };
-        });
-
-        return appointment;
-      },
-
-      getNextTimeSlot: (timeSlotId) => {
-        const state = get();
-        const currentSlot = state.timeSlots.find((slot) => slot.id === timeSlotId);
-        if (!currentSlot) return undefined;
-
-        return state.timeSlots.find(
-          (slot) =>
-            slot.date === currentSlot.date &&
-            slot.startTime === currentSlot.endTime
-        );
-      },
-      
-      updateAppointment: async (id, appointmentData) => {
-        await Storage.updateAppointment(id, appointmentData);
-        set((state) => ({
-          appointments: state.appointments.map((appointment) => 
-            appointment.id === id ? { ...appointment, ...appointmentData } : appointment
-          )
-        }));
-      },
-      
-      cancelAppointment: (id) => {
-        const appointment = get().appointments.find(a => a.id === id);
-        if (appointment) {
-          // Make the time slot available again
-          get().updateTimeSlot(appointment.timeSlotId, { isAvailable: true });
-          
-          set((state) => ({
-            appointments: state.appointments.map((a) => 
-              a.id === id ? { ...a, status: 'cancelled' } : a
-            )
-          }));
-        }
-      },
-      
-      getAppointmentsByClient: (clientId) => {
-        return get().appointments.filter((appointment) => appointment.clientId === clientId);
-      },
-      
-      getAppointmentsByDate: (date) => {
-        const timeSlots = get().timeSlots.filter(slot => slot.date === date);
-        const timeSlotIds = timeSlots.map(slot => slot.id);
+      // If it's today, check if the time has already passed
+      if (timeSlotDate.toDateString() === now.toDateString()) {
+        const [hours, minutes] = timeSlot.startTime.split(':').map(Number);
+        const timeSlotTime = new Date(timeSlotDate);
+        timeSlotTime.setHours(hours, minutes, 0, 0);
         
-        return get().appointments.filter(
-          appointment => timeSlotIds.includes(appointment.timeSlotId)
-        );
-      },
-      
-      // Business Info actions
-      updateBusinessInfo: (info: BusinessInfo) => {
-        set({ businessInfo: info });
-      },
-
-      getBusinessInfo: () => {
-        return get().businessInfo;
-      },
-
-      getUpcomingAppointments: () => {
-        const today = new Date();
-        const timeSlots = get().timeSlots;
-        
-        return get().appointments.filter(appointment => {
-          const timeSlot = timeSlots.find(slot => slot.id === appointment.timeSlotId);
-          if (!timeSlot) return false;
-          
-          const appointmentDate = parseISO(timeSlot.date);
-          return appointment.status === 'scheduled' && isAfter(appointmentDate, today);
-        });
+        return timeSlot.isAvailable && isAfter(timeSlotTime, now);
       }
-    })
-);
+      
+      return timeSlot.isAvailable && isDateValid;
+    });
+  },
+  
+  // Appointment actions
+  createAppointment: async (appointmentData) => {
+    const appointment = {
+      ...appointmentData,
+      id: crypto.randomUUID(),
+      createdAt: new Date().toISOString(),
+    };
+    await Storage.addAppointment(appointment);
 
-// Helper function to format dates in Portuguese
-export const formatDatePtBR = (date: string | Date) => {
-  const dateObj = typeof date === 'string' ? parseISO(date) : date;
-  return format(dateObj, "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
-};
+    set((state) => {
+      // Mark the selected time slot as unavailable
+      const updatedTimeSlots = state.timeSlots.map((slot) =>
+        slot.id === appointmentData.timeSlotId
+          ? { ...slot, isAvailable: false }
+          : slot
+      );
 
-// Helper function to format time
-export const formatTime = (time: string) => {
-  return time;
-};
+      // Find and mark the next 30-minute slot as unavailable
+      const selectedSlot = state.timeSlots.find(
+        (slot) => slot.id === appointmentData.timeSlotId
+      );
+      if (selectedSlot) {
+        const nextSlot = state.timeSlots.find(
+          (slot) =>
+            slot.date === selectedSlot.date &&
+            slot.startTime === selectedSlot.endTime
+        );
+        if (nextSlot) {
+          updatedTimeSlots.forEach((slot) => {
+            if (slot.id === nextSlot.id) {
+              slot.isAvailable = false;
+            }
+          });
+        }
+      }
 
-const checkAndSendReminders = () => {
-  const now = new Date();
-  const thirtyMinutesFromNow = new Date(now.getTime() + 30 * 60 * 1000);
+      return {
+        appointments: [...state.appointments, appointment],
+        timeSlots: updatedTimeSlots,
+      };
+    });
 
-  appointments.forEach(appointment => {
-    const timeSlot = timeSlots.find(ts => ts.id === appointment.timeSlotId);
-    const client = clients.find(c => c.id === appointment.clientId);
+    return appointment;
+  },
 
-    if (!timeSlot || !client || appointment.status !== 'scheduled') return;
+  getNextTimeSlot: (timeSlotId) => {
+    const state = get();
+    const currentSlot = state.timeSlots.find((slot) => slot.id === timeSlotId);
+    if (!currentSlot) return undefined;
 
-    const appointmentDateTime = new Date(`${timeSlot.date}T${timeSlot.startTime}`);
-    const timeDiff = appointmentDateTime.getTime() - now.getTime();
-    const minutesDiff = Math.floor(timeDiff / (1000 * 60));
-
-    // Check if appointment is approximately 30 minutes away (with 1-minute tolerance)
-    if (minutesDiff >= 29 && minutesDiff <= 31 && !appointment.reminderSent) {
-      // Send WhatsApp reminder
-      const message = `Olá ${client.name}! Lembrete: Você tem um horário marcado para design de sobrancelhas hoje às ${timeSlot.startTime}. Aguardamos você!`;
-      const whatsappLink = `https://wa.me/5534991122682?text=${encodeURIComponent(message)}`;
-      window.open(whatsappLink, '_blank');
-
-      // Mark reminder as sent
-      updateAppointment(appointment.id, { ...appointment, reminderSent: true });
-    }
-  });
-};
-
-// Start checking for reminders every minute
-setInterval(checkAndSendReminders, 60 * 1000);
+    return state.timeSlots.find(
+      (slot) =>
+        slot.date === currentSlot.date &&
+        slot.startTime === currentSlot.endTime
+    );
+  },
+  
+  updateAppointment: async (id, appointmentData) => {
+    await Storage.updateAppointment(id, appointmentData);
+    set((state) => ({
+      appointments: state.appointments.map((appointment) =>
+        appointment.id === id ? { ...appointment, ...appointmentData } : appointment
+      )
+    }));
+  },
+  
+  cancelAppointment: async (id) => {
+    await Storage.deleteAppointment(id);
+    set((state) => ({
+      appointments: state.appointments.filter((appointment) => appointment.id !== id)
+    }));
+  },
+  
+  getAppointmentsByClient: (clientId) => {
+    return get().appointments.filter((appointment) => appointment.clientId === clientId);
+  },
+  
+  getAppointmentsByDate: (date) => {
+    return get().appointments.filter((appointment) => {
+      const timeSlot = get().timeSlots.find((slot) => slot.id === appointment.timeSlotId);
+      return timeSlot?.date === date;
+    });
+  },
+  
+  getUpcomingAppointments: () => {
+    const now = new Date();
+    return get().appointments.filter((appointment) => {
+      const timeSlot = get().timeSlots.find((slot) => slot.id === appointment.timeSlotId);
+      if (!timeSlot) return false;
+      
+      const appointmentDate = parseISO(timeSlot.date);
+      const [hours, minutes] = timeSlot.startTime.split(':').map(Number);
+      appointmentDate.setHours(hours, minutes, 0, 0);
+      
+      return isAfter(appointmentDate, now);
+    });
+  }
+}));
