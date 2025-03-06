@@ -1,4 +1,4 @@
-import { kv } from '@vercel/kv';
+import { put, del, list, get } from '@vercel/blob';
 import { Client, TimeSlot, Appointment, BusinessInfo } from '../types';
 
 export class Storage {
@@ -9,14 +9,20 @@ export class Storage {
 
   // Client operations
   static async getClients(): Promise<Client[]> {
-    const clients = await kv.get<Client[]>(this.CLIENTS_KEY);
-    return clients || [];
+    try {
+      const { url } = await get(this.CLIENTS_KEY);
+      const response = await fetch(url);
+      const clients = await response.json();
+      return clients || [];
+    } catch (error) {
+      return [];
+    }
   }
 
   static async addClient(client: Client): Promise<void> {
     const clients = await this.getClients();
     clients.push(client);
-    await kv.set(this.CLIENTS_KEY, clients);
+    await put(this.CLIENTS_KEY, JSON.stringify(clients), { access: 'public' });
   }
 
   static async updateClient(id: string, updatedClient: Partial<Client>): Promise<void> {
@@ -24,26 +30,32 @@ export class Storage {
     const index = clients.findIndex(client => client.id === id);
     if (index !== -1) {
       clients[index] = { ...clients[index], ...updatedClient };
-      await kv.set(this.CLIENTS_KEY, clients);
+      await put(this.CLIENTS_KEY, JSON.stringify(clients), { access: 'public' });
     }
   }
 
   static async deleteClient(id: string): Promise<void> {
     const clients = await this.getClients();
     const filteredClients = clients.filter(client => client.id !== id);
-    await kv.set(this.CLIENTS_KEY, filteredClients);
+    await put(this.CLIENTS_KEY, JSON.stringify(filteredClients), { access: 'public' });
   }
 
   // TimeSlot operations
   static async getTimeSlots(): Promise<TimeSlot[]> {
-    const timeSlots = await kv.get<TimeSlot[]>(this.TIME_SLOTS_KEY);
-    return timeSlots || [];
+    try {
+      const { url } = await get(this.TIME_SLOTS_KEY);
+      const response = await fetch(url);
+      const timeSlots = await response.json();
+      return timeSlots || [];
+    } catch (error) {
+      return [];
+    }
   }
 
   static async addTimeSlot(timeSlot: TimeSlot): Promise<void> {
     const timeSlots = await this.getTimeSlots();
     timeSlots.push(timeSlot);
-    await kv.set(this.TIME_SLOTS_KEY, timeSlots);
+    await put(this.TIME_SLOTS_KEY, JSON.stringify(timeSlots), { access: 'public' });
   }
 
   static async updateTimeSlot(id: string, updatedTimeSlot: Partial<TimeSlot>): Promise<void> {
@@ -51,26 +63,32 @@ export class Storage {
     const index = timeSlots.findIndex(slot => slot.id === id);
     if (index !== -1) {
       timeSlots[index] = { ...timeSlots[index], ...updatedTimeSlot };
-      await kv.set(this.TIME_SLOTS_KEY, timeSlots);
+      await put(this.TIME_SLOTS_KEY, JSON.stringify(timeSlots), { access: 'public' });
     }
   }
 
   static async deleteTimeSlot(id: string): Promise<void> {
     const timeSlots = await this.getTimeSlots();
     const filteredTimeSlots = timeSlots.filter(slot => slot.id !== id);
-    await kv.set(this.TIME_SLOTS_KEY, filteredTimeSlots);
+    await put(this.TIME_SLOTS_KEY, JSON.stringify(filteredTimeSlots), { access: 'public' });
   }
 
   // Appointment operations
   static async getAppointments(): Promise<Appointment[]> {
-    const appointments = await kv.get<Appointment[]>(this.APPOINTMENTS_KEY);
-    return appointments || [];
+    try {
+      const { url } = await get(this.APPOINTMENTS_KEY);
+      const response = await fetch(url);
+      const appointments = await response.json();
+      return appointments || [];
+    } catch (error) {
+      return [];
+    }
   }
 
   static async addAppointment(appointment: Appointment): Promise<void> {
     const appointments = await this.getAppointments();
     appointments.push(appointment);
-    await kv.set(this.APPOINTMENTS_KEY, appointments);
+    await put(this.APPOINTMENTS_KEY, JSON.stringify(appointments), { access: 'public' });
   }
 
   static async updateAppointment(id: string, updatedAppointment: Partial<Appointment>): Promise<void> {
@@ -78,31 +96,38 @@ export class Storage {
     const index = appointments.findIndex(apt => apt.id === id);
     if (index !== -1) {
       appointments[index] = { ...appointments[index], ...updatedAppointment };
-      await kv.set(this.APPOINTMENTS_KEY, appointments);
+      await put(this.APPOINTMENTS_KEY, JSON.stringify(appointments), { access: 'public' });
     }
   }
 
   static async deleteAppointment(id: string): Promise<void> {
     const appointments = await this.getAppointments();
     const filteredAppointments = appointments.filter(apt => apt.id !== id);
-    await kv.set(this.APPOINTMENTS_KEY, filteredAppointments);
+    await put(this.APPOINTMENTS_KEY, JSON.stringify(filteredAppointments), { access: 'public' });
   }
 
   // Business Info operations
   static async getBusinessInfo(): Promise<BusinessInfo | null> {
-    return await kv.get<BusinessInfo>(this.BUSINESS_INFO_KEY);
+    try {
+      const { url } = await get(this.BUSINESS_INFO_KEY);
+      const response = await fetch(url);
+      const info = await response.json();
+      return info;
+    } catch (error) {
+      return null;
+    }
   }
 
   static async updateBusinessInfo(info: BusinessInfo): Promise<void> {
-    await kv.set(this.BUSINESS_INFO_KEY, info);
+    await put(this.BUSINESS_INFO_KEY, JSON.stringify(info), { access: 'public' });
   }
 
   // Utility functions
   static async resetStore(): Promise<void> {
     await Promise.all([
-      kv.del(this.CLIENTS_KEY),
-      kv.del(this.TIME_SLOTS_KEY),
-      kv.del(this.APPOINTMENTS_KEY)
+      del(this.CLIENTS_KEY),
+      del(this.TIME_SLOTS_KEY),
+      del(this.APPOINTMENTS_KEY)
     ]);
   }
 }
