@@ -93,7 +93,6 @@ export const useAppStore = create<AppState>()((set, get) => ({
       });
     }
   },
-},
   
   // Client actions
   addClient: async (clientData) => {
@@ -191,43 +190,25 @@ export const useAppStore = create<AppState>()((set, get) => ({
           : slot
       );
 
-      // Find and mark the next 30-minute slot as unavailable
-      const selectedSlot = state.timeSlots.find(
-        (slot) => slot.id === appointmentData.timeSlotId
-      );
-      if (selectedSlot) {
-        const nextSlot = state.timeSlots.find(
-          (slot) =>
-            slot.date === selectedSlot.date &&
-            slot.startTime === selectedSlot.endTime
-        );
-        if (nextSlot) {
-          updatedTimeSlots.forEach((slot) => {
-            if (slot.id === nextSlot.id) {
-              slot.isAvailable = false;
-            }
-          });
-        }
-      }
-
       return {
         appointments: [...state.appointments, appointment],
-        timeSlots: updatedTimeSlots,
+        timeSlots: updatedTimeSlots
       };
     });
 
     return appointment;
   },
-
+  
   getNextTimeSlot: (timeSlotId) => {
-    const state = get();
-    const currentSlot = state.timeSlots.find((slot) => slot.id === timeSlotId);
+    const timeSlots = get().timeSlots;
+    const currentSlot = timeSlots.find((slot) => slot.id === timeSlotId);
     if (!currentSlot) return undefined;
 
-    return state.timeSlots.find(
+    return timeSlots.find(
       (slot) =>
         slot.date === currentSlot.date &&
-        slot.startTime === currentSlot.endTime
+        slot.startTime === currentSlot.endTime &&
+        slot.isAvailable
     );
   },
   
@@ -241,9 +222,19 @@ export const useAppStore = create<AppState>()((set, get) => ({
   },
   
   cancelAppointment: async (id) => {
-    await Storage.deleteAppointment(id);
+    const appointment = get().appointments.find((a) => a.id === id);
+    if (!appointment) return;
+
+    await Storage.updateAppointment(id, { status: 'cancelled' });
+    await Storage.updateTimeSlot(appointment.timeSlotId, { isAvailable: true });
+
     set((state) => ({
-      appointments: state.appointments.filter((appointment) => appointment.id !== id)
+      appointments: state.appointments.map((a) =>
+        a.id === id ? { ...a, status: 'cancelled' } : a
+      ),
+      timeSlots: state.timeSlots.map((slot) =>
+        slot.id === appointment.timeSlotId ? { ...slot, isAvailable: true } : slot
+      )
     }));
   },
   
@@ -252,23 +243,34 @@ export const useAppStore = create<AppState>()((set, get) => ({
   },
   
   getAppointmentsByDate: (date) => {
+    const timeSlots = get().timeSlots;
     return get().appointments.filter((appointment) => {
-      const timeSlot = get().timeSlots.find((slot) => slot.id === appointment.timeSlotId);
-      return timeSlot?.date === date;
+      const timeSlot = timeSlots.find((slot) => slot.id === appointment.timeSlotId);
+      return timeSlot && timeSlot.date === date;
     });
   },
   
   getUpcomingAppointments: () => {
     const now = new Date();
-    return get().appointments.filter((appointment) => {
-      const timeSlot = get().timeSlots.find((slot) => slot.id === appointment.timeSlotId);
-      if (!timeSlot) return false;
-      
-      const appointmentDate = parseISO(timeSlot.date);
-      const [hours, minutes] = timeSlot.startTime.split(':').map(Number);
-      appointmentDate.setHours(hours, minutes, 0, 0);
-      
-      return isAfter(appointmentDate, now);
-    });
+    const timeSlots = get().timeSlots;
+    
+    return get().appointments
+      .filter((appointment) => {
+        const timeSlot = timeSlots.find((slot) => slot.id === appointment.timeSlotId);
+        if (!timeSlot) return false;
+        
+        const appointmentDate = parseISO(timeSlot.date);
+        const [hours, minutes] = timeSlot.startTime.split(':').map(Number);
+        appointmentDate.setHours(hours, minutes);
+        
+        return isAfter(appointmentDate, now) && appointment.status === 'scheduled';
+      })
+      .sort((a, b) => {
+        const slotA = timeSlots.find((slot) => slot.id === a.timeSlotId);
+        const slotB = timeSlots.find((slot) => slot.id === b.timeSlotId);
+        if (!slotA || !slotB) return 0;
+        
+        return new Date(slotA.date).getTime() - new Date(slotB.date).getTime();
+      });
   }
 }));

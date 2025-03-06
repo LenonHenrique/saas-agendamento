@@ -53,28 +53,36 @@ const TimeSlots: React.FC = () => {
   };
   
   const handleAddTimeSlot = async () => {
-    const startDate = parseISO(formData.startDate);
-    const endDate = parseISO(formData.endDate);
-    let currentDate = startDate;
-  
-    while (currentDate <= endDate) {
-      // Skip Sundays
-      if (!isSunday(currentDate)) {
-        const slots = generateDayTimeSlots(format(currentDate, 'yyyy-MM-dd'));
-        for (const slot of slots) {
-          try {
-            await addTimeSlot(slot);
-          } catch (error) {
-            console.error('Error adding time slot:', error);
+    try {
+      const startDate = parseISO(formData.startDate);
+      const endDate = parseISO(formData.endDate);
+      let currentDate = startDate;
+    
+      while (currentDate <= endDate) {
+        // Skip Sundays
+        if (!isSunday(currentDate)) {
+          const slots = generateDayTimeSlots(format(currentDate, 'yyyy-MM-dd'));
+          for (const slot of slots) {
+            try {
+              await addTimeSlot(slot);
+            } catch (error) {
+              console.error('Error adding time slot:', error);
+              alert('Erro ao adicionar horário. Por favor, tente novamente.');
+              return;
+            }
           }
         }
+        currentDate = addDays(currentDate, 1);
       }
-      currentDate = addDays(currentDate, 1);
+      
+      setIsAddingTimeSlot(false);
+      alert('Horários adicionados com sucesso!');
+    } catch (error) {
+      console.error('Error in handleAddTimeSlot:', error);
+      alert('Erro ao adicionar horários. Por favor, tente novamente.');
     }
-    
-    setIsAddingTimeSlot(false);
   };
-  
+
   // Group time slots by date
   const timeSlotsByDate = timeSlots.reduce<Record<string, typeof timeSlots>>((acc, timeSlot) => {
     if (!acc[timeSlot.date]) {

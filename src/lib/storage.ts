@@ -73,4 +73,46 @@ export class Storage {
     handleStorage.remove(this.APPOINTMENTS_KEY);
     handleStorage.remove(this.BUSINESS_INFO_KEY);
   }
+  static async getClients(): Promise<Client[]> {
+    return handleStorage.get(this.CLIENTS_KEY) || [];
+  }
+  static async addClient(client: Client): Promise<void> {
+    const clients = await this.getClients();
+    clients.push(client);
+    handleStorage.set(this.CLIENTS_KEY, clients);
+  }
+  static async updateClient(id: string, clientData: Partial<Client>): Promise<void> {
+    const clients = await this.getClients();
+    const index = clients.findIndex(client => client.id === id);
+    if (index !== -1) {
+      clients[index] = { ...clients[index], ...clientData };
+      handleStorage.set(this.CLIENTS_KEY, clients);
+    }
+  }
+  static async deleteClient(id: string): Promise<void> {
+    const clients = await this.getClients();
+    const filteredClients = clients.filter(client => client.id !== id);
+    handleStorage.set(this.CLIENTS_KEY, filteredClients);
+  }
+  static async getAppointments(): Promise<Appointment[]> {
+    return handleStorage.get(this.APPOINTMENTS_KEY) || [];
+  }
+  static async addAppointment(appointment: Appointment): Promise<void> {
+    const appointments = await this.getAppointments();
+    appointments.push(appointment);
+    handleStorage.set(this.APPOINTMENTS_KEY, appointments);
+  }
+  static async updateAppointment(id: string, appointmentData: Partial<Appointment>): Promise<void> {
+    const appointments = await this.getAppointments();
+    const index = appointments.findIndex(appointment => appointment.id === id);
+    if (index !== -1) {
+      appointments[index] = { ...appointments[index], ...appointmentData };
+      handleStorage.set(this.APPOINTMENTS_KEY, appointments);
+    }
+  }
+  static async deleteAppointment(id: string): Promise<void> {
+    const appointments = await this.getAppointments();
+    const filteredAppointments = appointments.filter(appointment => appointment.id !== id);
+    handleStorage.set(this.APPOINTMENTS_KEY, filteredAppointments);
+  }
 }
