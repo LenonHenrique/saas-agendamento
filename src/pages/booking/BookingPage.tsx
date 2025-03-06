@@ -29,8 +29,14 @@ const BookingPage: React.FC = () => {
     getAvailableTimeSlots, 
     addClient, 
     createAppointment,
-    addTimeSlot
+    addTimeSlot,
+    initializeData
   } = useAppStore();
+  
+  // Initialize data from storage
+  useEffect(() => {
+    initializeData();
+  }, [initializeData]);
   
   // Add some demo time slots if none exist
   useEffect(() => {
