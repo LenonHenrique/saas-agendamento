@@ -32,6 +32,11 @@ export class Storage {
   private static readonly TIME_SLOTS_KEY = 'time_slots';
   private static readonly APPOINTMENTS_KEY = 'appointments';
   private static readonly BUSINESS_INFO_KEY = 'business_info';
+
+  static async getTimeSlots(): Promise<TimeSlot[]> {
+    return handleStorage.get(this.TIME_SLOTS_KEY) || [];
+  }
+
   static async saveTimeSlots(timeSlots: TimeSlot[]): Promise<void> {
     try {
       handleStorage.set(this.TIME_SLOTS_KEY, timeSlots);
@@ -39,6 +44,27 @@ export class Storage {
       console.error('Error saving time slots:', error);
       throw error;
     }
+  }
+
+  static async addTimeSlot(timeSlot: TimeSlot): Promise<void> {
+    const timeSlots = await this.getTimeSlots();
+    timeSlots.push(timeSlot);
+    await this.saveTimeSlots(timeSlots);
+  }
+
+  static async updateTimeSlot(id: string, timeSlotData: Partial<TimeSlot>): Promise<void> {
+    const timeSlots = await this.getTimeSlots();
+    const index = timeSlots.findIndex(slot => slot.id === id);
+    if (index !== -1) {
+      timeSlots[index] = { ...timeSlots[index], ...timeSlotData };
+      await this.saveTimeSlots(timeSlots);
+    }
+  }
+
+  static async deleteTimeSlot(id: string): Promise<void> {
+    const timeSlots = await this.getTimeSlots();
+    const filteredSlots = timeSlots.filter(slot => slot.id !== id);
+    await this.saveTimeSlots(filteredSlots);
   }
   // Utility functions
   static async resetStore(): Promise<void> {
