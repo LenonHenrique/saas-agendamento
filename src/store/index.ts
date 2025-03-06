@@ -72,18 +72,26 @@ export const useAppStore = create<AppState>()((set, get) => ({
   
   // Initialize data from storage
   initializeData: async () => {
-    const [clients, timeSlots, appointments] = await Promise.all([
-      Storage.getClients(),
+    const [timeSlots, clients, appointments] = await Promise.all([
       Storage.getTimeSlots(),
+      Storage.getClients(),
       Storage.getAppointments()
     ]);
     
     set({
-      clients,
-      timeSlots,
-      appointments
+      timeSlots: timeSlots || [],
+      clients: clients || [],
+      appointments: appointments || []
     });
-  },
+  } catch (error) {
+    console.error('Error initializing data:', error);
+    set({
+      timeSlots: [],
+      clients: [],
+      appointments: []
+    });
+  }
+},
   
   // Client actions
   addClient: async (clientData) => {

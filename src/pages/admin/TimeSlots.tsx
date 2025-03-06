@@ -52,18 +52,18 @@ const TimeSlots: React.FC = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
   
-  const handleAddTimeSlot = () => {
+  const handleAddTimeSlot = async () => {
     const startDate = parseISO(formData.startDate);
     const endDate = parseISO(formData.endDate);
     let currentDate = startDate;
-
+  
     while (currentDate <= endDate) {
       // Skip Sundays
       if (!isSunday(currentDate)) {
         const slots = generateDayTimeSlots(format(currentDate, 'yyyy-MM-dd'));
-        slots.forEach(slot => {
-          addTimeSlot(slot);
-        });
+        for (const slot of slots) {
+          await addTimeSlot(slot);
+        }
       }
       currentDate = addDays(currentDate, 1);
     }
