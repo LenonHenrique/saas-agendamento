@@ -1,5 +1,31 @@
-import { put, del, list, get } from '@vercel/blob';
 import { Client, TimeSlot, Appointment, BusinessInfo } from '../types';
+
+// Helper function to handle storage operations
+const handleStorage = {
+  get: (key: string) => {
+    try {
+      const data = localStorage.getItem(key);
+      return data ? JSON.parse(data) : null;
+    } catch (error) {
+      console.error(`Error getting data for key ${key}:`, error);
+      return null;
+    }
+  },
+  set: (key: string, value: any) => {
+    try {
+      localStorage.setItem(key, JSON.stringify(value));
+    } catch (error) {
+      console.error(`Error setting data for key ${key}:`, error);
+    }
+  },
+  remove: (key: string) => {
+    try {
+      localStorage.removeItem(key);
+    } catch (error) {
+      console.error(`Error removing data for key ${key}:`, error);
+    }
+  }
+};
 
 export class Storage {
   private static readonly CLIENTS_KEY = 'clients';
@@ -9,20 +35,13 @@ export class Storage {
 
   // Client operations
   static async getClients(): Promise<Client[]> {
-    try {
-      const { url } = await get(this.CLIENTS_KEY);
-      const response = await fetch(url);
-      const clients = await response.json();
-      return clients || [];
-    } catch (error) {
-      return [];
-    }
+    return handleStorage.get(this.CLIENTS_KEY) || [];
   }
 
   static async addClient(client: Client): Promise<void> {
     const clients = await this.getClients();
     clients.push(client);
-    await put(this.CLIENTS_KEY, JSON.stringify(clients), { access: 'public' });
+    handleStorage.set(this.CLIENTS_KEY, clients);
   }
 
   static async updateClient(id: string, updatedClient: Partial<Client>): Promise<void> {
@@ -30,32 +49,25 @@ export class Storage {
     const index = clients.findIndex(client => client.id === id);
     if (index !== -1) {
       clients[index] = { ...clients[index], ...updatedClient };
-      await put(this.CLIENTS_KEY, JSON.stringify(clients), { access: 'public' });
+      handleStorage.set(this.CLIENTS_KEY, clients);
     }
   }
 
   static async deleteClient(id: string): Promise<void> {
     const clients = await this.getClients();
     const filteredClients = clients.filter(client => client.id !== id);
-    await put(this.CLIENTS_KEY, JSON.stringify(filteredClients), { access: 'public' });
+    handleStorage.set(this.CLIENTS_KEY, filteredClients);
   }
 
   // TimeSlot operations
   static async getTimeSlots(): Promise<TimeSlot[]> {
-    try {
-      const { url } = await get(this.TIME_SLOTS_KEY);
-      const response = await fetch(url);
-      const timeSlots = await response.json();
-      return timeSlots || [];
-    } catch (error) {
-      return [];
-    }
+    return handleStorage.get(this.TIME_SLOTS_KEY) || [];
   }
 
   static async addTimeSlot(timeSlot: TimeSlot): Promise<void> {
     const timeSlots = await this.getTimeSlots();
     timeSlots.push(timeSlot);
-    await put(this.TIME_SLOTS_KEY, JSON.stringify(timeSlots), { access: 'public' });
+    handleStorage.set(this.TIME_SLOTS_KEY, timeSlots);
   }
 
   static async updateTimeSlot(id: string, updatedTimeSlot: Partial<TimeSlot>): Promise<void> {
@@ -63,32 +75,25 @@ export class Storage {
     const index = timeSlots.findIndex(slot => slot.id === id);
     if (index !== -1) {
       timeSlots[index] = { ...timeSlots[index], ...updatedTimeSlot };
-      await put(this.TIME_SLOTS_KEY, JSON.stringify(timeSlots), { access: 'public' });
+      handleStorage.set(this.TIME_SLOTS_KEY, timeSlots);
     }
   }
 
   static async deleteTimeSlot(id: string): Promise<void> {
     const timeSlots = await this.getTimeSlots();
     const filteredTimeSlots = timeSlots.filter(slot => slot.id !== id);
-    await put(this.TIME_SLOTS_KEY, JSON.stringify(filteredTimeSlots), { access: 'public' });
+    handleStorage.set(this.TIME_SLOTS_KEY, filteredTimeSlots);
   }
 
   // Appointment operations
   static async getAppointments(): Promise<Appointment[]> {
-    try {
-      const { url } = await get(this.APPOINTMENTS_KEY);
-      const response = await fetch(url);
-      const appointments = await response.json();
-      return appointments || [];
-    } catch (error) {
-      return [];
-    }
+    return handleStorage.get(this.APPOINTMENTS_KEY) || [];
   }
 
   static async addAppointment(appointment: Appointment): Promise<void> {
     const appointments = await this.getAppointments();
     appointments.push(appointment);
-    await put(this.APPOINTMENTS_KEY, JSON.stringify(appointments), { access: 'public' });
+    handleStorage.set(this.APPOINTMENTS_KEY, appointments);
   }
 
   static async updateAppointment(id: string, updatedAppointment: Partial<Appointment>): Promise<void> {
@@ -96,38 +101,30 @@ export class Storage {
     const index = appointments.findIndex(apt => apt.id === id);
     if (index !== -1) {
       appointments[index] = { ...appointments[index], ...updatedAppointment };
-      await put(this.APPOINTMENTS_KEY, JSON.stringify(appointments), { access: 'public' });
+      handleStorage.set(this.APPOINTMENTS_KEY, appointments);
     }
   }
 
   static async deleteAppointment(id: string): Promise<void> {
     const appointments = await this.getAppointments();
     const filteredAppointments = appointments.filter(apt => apt.id !== id);
-    await put(this.APPOINTMENTS_KEY, JSON.stringify(filteredAppointments), { access: 'public' });
+    handleStorage.set(this.APPOINTMENTS_KEY, filteredAppointments);
   }
 
   // Business Info operations
   static async getBusinessInfo(): Promise<BusinessInfo | null> {
-    try {
-      const { url } = await get(this.BUSINESS_INFO_KEY);
-      const response = await fetch(url);
-      const info = await response.json();
-      return info;
-    } catch (error) {
-      return null;
-    }
+    return handleStorage.get(this.BUSINESS_INFO_KEY);
   }
 
   static async updateBusinessInfo(info: BusinessInfo): Promise<void> {
-    await put(this.BUSINESS_INFO_KEY, JSON.stringify(info), { access: 'public' });
+    handleStorage.set(this.BUSINESS_INFO_KEY, info);
   }
 
   // Utility functions
   static async resetStore(): Promise<void> {
-    await Promise.all([
-      del(this.CLIENTS_KEY),
-      del(this.TIME_SLOTS_KEY),
-      del(this.APPOINTMENTS_KEY)
-    ]);
+    handleStorage.remove(this.CLIENTS_KEY);
+    handleStorage.remove(this.TIME_SLOTS_KEY);
+    handleStorage.remove(this.APPOINTMENTS_KEY);
+    handleStorage.remove(this.BUSINESS_INFO_KEY);
   }
 }
