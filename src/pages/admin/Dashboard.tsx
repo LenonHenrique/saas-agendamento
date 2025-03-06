@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAppStore } from '../../store';
 import Layout from '../../components/Layout';
 import AppointmentCard from '../../components/AppointmentCard';
@@ -16,9 +16,14 @@ const Dashboard: React.FC = () => {
     clients, 
     updateAppointment, 
     cancelAppointment,
-    getAppointmentsByDate
+    getAppointmentsByDate,
+    initializeData
   } = useAppStore();
   
+  useEffect(() => {
+    initializeData();
+  }, [initializeData]);
+
   const formattedDate = format(selectedDate, "yyyy-MM-dd");
   const displayDate = format(selectedDate, "EEEE, dd 'de' MMMM", { locale: ptBR });
   

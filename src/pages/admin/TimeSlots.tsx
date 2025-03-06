@@ -5,11 +5,13 @@ import Button from '../../components/Button';
 import Card from '../../components/Card';
 import { format, addDays, parseISO, isSunday } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Plus, Calendar, Clock, Trash } from 'lucide-react';
+import { Plus, Calendar, Clock, Trash, Save } from 'lucide-react';
+import { Storage } from '../../lib/storage';
 
 const TimeSlots: React.FC = () => {
   const { timeSlots, addTimeSlot, deleteTimeSlot } = useAppStore();
   const [isAddingTimeSlot, setIsAddingTimeSlot] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   
   const [formData, setFormData] = useState({
     startDate: format(new Date(), 'yyyy-MM-dd'),
@@ -88,13 +90,34 @@ const TimeSlots: React.FC = () => {
       <div className="space-y-6">
         <div className="flex justify-between items-center">
           <h1 className="text-2xl font-bold text-gray-900">Horários Disponíveis</h1>
-          <Button
-            variant="primary"
-            onClick={() => setIsAddingTimeSlot(true)}
-          >
-            <Plus size={16} className="mr-2" />
-            Novo Horário
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={async () => {
+                setIsSaving(true);
+                try {
+                  await Storage.saveTimeSlots(timeSlots);
+                  alert('Horários salvos com sucesso!');
+                } catch (error) {
+                  console.error('Error saving time slots:', error);
+                  alert('Erro ao salvar horários. Tente novamente.');
+                } finally {
+                  setIsSaving(false);
+                }
+              }}
+              disabled={isSaving}
+            >
+              <Save size={16} className="mr-2" />
+              {isSaving ? 'Salvando...' : 'Salvar Horários'}
+            </Button>
+            <Button
+              variant="primary"
+              onClick={() => setIsAddingTimeSlot(true)}
+            >
+              <Plus size={16} className="mr-2" />
+              Novo Horário
+            </Button>
+          </div>
         </div>
         
         {isAddingTimeSlot && (
