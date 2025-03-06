@@ -62,7 +62,11 @@ const TimeSlots: React.FC = () => {
       if (!isSunday(currentDate)) {
         const slots = generateDayTimeSlots(format(currentDate, 'yyyy-MM-dd'));
         for (const slot of slots) {
-          await addTimeSlot(slot);
+          try {
+            await addTimeSlot(slot);
+          } catch (error) {
+            console.error('Error adding time slot:', error);
+          }
         }
       }
       currentDate = addDays(currentDate, 1);
