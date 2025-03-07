@@ -21,7 +21,13 @@ const Dashboard: React.FC = () => {
   } = useAppStore();
   
   useEffect(() => {
-    initializeData();
+    const loadData = async () => {
+      // Clear existing data first
+      await Storage.resetStore();
+      // Then initialize fresh data
+      await initializeData();
+    };
+    loadData();
   }, [initializeData]);
 
   const formattedDate = format(selectedDate, "yyyy-MM-dd");
