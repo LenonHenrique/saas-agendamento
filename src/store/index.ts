@@ -190,6 +190,9 @@ export const useAppStore = create<AppState>()((set, get) => ({
           : slot
       );
 
+      // Save the updated time slots to storage
+      Storage.saveTimeSlots(updatedTimeSlots);
+
       return {
         appointments: [...state.appointments, appointment],
         timeSlots: updatedTimeSlots
