@@ -4,6 +4,7 @@ import Card from '../../components/Card';
 import Button from '../../components/Button';
 import { Share2 } from 'lucide-react';
 import { useAppStore } from '../../store';
+import { Storage } from '../../lib/storage';
 
 const Settings: React.FC = () => {
   const [bookingLink, setBookingLink] = useState(`${window.location.origin}/agendar`);
@@ -32,6 +33,17 @@ const Settings: React.FC = () => {
     const message = `Olá! Agende seu horário para design de sobrancelhas aqui: ${bookingLink}`;
     const whatsappLink = `https://wa.me/5534991122682?text=${encodeURIComponent(message)}`;
     window.open(whatsappLink, '_blank');
+  };
+
+  const handleSaveBusinessInfo = async () => {
+    try {
+      await Storage.saveBusinessInfo(businessInfo);
+      updateBusinessInfo(businessInfo);
+      alert('Informações salvas com sucesso!');
+    } catch (error) {
+      console.error('Error saving business info:', error);
+      alert('Erro ao salvar informações. Por favor, tente novamente.');
+    }
   };
   
   return (
@@ -124,16 +136,12 @@ const Settings: React.FC = () => {
             </div>
             
             <div className="flex justify-end">
-              const handleSaveBusinessInfo = async () => {
-                try {
-                  await Storage.saveBusinessInfo(businessInfo);
-                  updateBusinessInfo(businessInfo);
-                  alert('Alterações salvas com sucesso!');
-                } catch (error) {
-                  console.error('Error saving business info:', error);
-                  alert('Erro ao salvar as alterações. Por favor, tente novamente.');
-                }
-              };
+              <Button
+                variant="primary"
+                onClick={handleSaveBusinessInfo}
+              >
+                Salvar Alterações
+              </Button>
             </div>
           </div>
         </Card>
