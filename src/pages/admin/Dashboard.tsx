@@ -11,6 +11,7 @@ import { Appointment, Client, TimeSlot } from '../../types';
 
 const Dashboard: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [isLoading, setIsLoading] = useState(true);
   
   const { 
     appointments, 
@@ -25,6 +26,7 @@ const Dashboard: React.FC = () => {
   
   useEffect(() => {
     const loadData = async () => {
+      setIsLoading(true);
       try {
         await initializeData();
         const [storedAppointments, storedClients, storedTimeSlots] = await Promise.all([
@@ -43,6 +45,8 @@ const Dashboard: React.FC = () => {
       } catch (error) {
         console.error('Error loading data:', error);
         alert('Erro ao carregar dados. Por favor, recarregue a página.');
+      } finally {
+        setIsLoading(false);
       }
     };
     loadData();
@@ -89,6 +93,16 @@ const Dashboard: React.FC = () => {
       alert('Erro ao cancelar agendamento. Tente novamente.');
     }
   };
+  
+  if (isLoading) {
+    return (
+      <Layout>
+        <div className="flex items-center justify-center h-screen">
+          <p className="text-gray-500">Carregando dados...</p>
+        </div>
+      </Layout>
+    );
+  }
   
   return (
     <Layout>

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Button from './Button';
 import Card from './Card';
+import { useAppStore } from '../store';
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -10,14 +11,21 @@ interface LoginModalProps {
 
 const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
   const navigate = useNavigate();
+  const { initializeData } = useAppStore();
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
   if (!isOpen) return null;
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     if (password === 'giobeauty') {
-      navigate('/admin');
+      try {
+        await initializeData();
+        navigate('/admin');
+      } catch (error) {
+        console.error('Error initializing data:', error);
+        setError('Erro ao carregar dados. Por favor, tente novamente.');
+      }
     } else {
       setError('Senha incorreta. Tente novamente.');
       setPassword('');
