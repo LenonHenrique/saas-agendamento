@@ -124,15 +124,16 @@ const Settings: React.FC = () => {
             </div>
             
             <div className="flex justify-end">
-              <Button
-                variant="primary"
-                onClick={() => {
+              const handleSaveBusinessInfo = async () => {
+                try {
+                  await Storage.saveBusinessInfo(businessInfo);
                   updateBusinessInfo(businessInfo);
                   alert('Alterações salvas com sucesso!');
-                }}
-              >
-                Salvar Alterações
-              </Button>
+                } catch (error) {
+                  console.error('Error saving business info:', error);
+                  alert('Erro ao salvar as alterações. Por favor, tente novamente.');
+                }
+              };
             </div>
           </div>
         </Card>
