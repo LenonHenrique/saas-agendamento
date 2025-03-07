@@ -1,9 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Button from '../components/Button';
+import LoginModal from '../components/LoginModal';
 
 const LandingPage: React.FC = () => {
   const navigate = useNavigate();
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-center px-4">
@@ -22,12 +24,16 @@ const LandingPage: React.FC = () => {
           <Button
             variant="outline"
             fullWidth
-            onClick={() => navigate('/admin')}
+            onClick={() => setIsLoginModalOpen(true)}
           >
             Área Administrativa
           </Button>
         </div>
       </div>
+      <LoginModal
+        isOpen={isLoginModalOpen}
+        onClose={() => setIsLoginModalOpen(false)}
+      />
     </div>
   );
 };
