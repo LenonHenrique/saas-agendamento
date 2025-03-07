@@ -55,7 +55,7 @@ const Dashboard: React.FC = () => {
     const timeSlot = timeSlots.find(ts => ts.id === appointment.timeSlotId);
     return timeSlot && 
            timeSlot.date === formattedDate && 
-           appointment.status === 'scheduled';
+           (appointment.status === 'scheduled' || appointment.status === 'completed');
   });
   
   const handlePreviousDay = () => {
