@@ -9,9 +9,20 @@ import { Plus, Calendar, Clock, Trash, Save } from 'lucide-react';
 import { Storage } from '../../lib/storage';
 
 const TimeSlots: React.FC = () => {
-  const { timeSlots, addTimeSlot, deleteTimeSlot } = useAppStore();
+  const { timeSlots, addTimeSlot, deleteTimeSlot, initializeData, set } = useAppStore();
   const [isAddingTimeSlot, setIsAddingTimeSlot] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    const loadData = async () => {
+      await initializeData();
+      const storedTimeSlots = await Storage.getTimeSlots();
+      if (storedTimeSlots) {
+        set({ timeSlots: storedTimeSlots });
+      }
+    };
+    loadData();
+  }, [initializeData, set]);
   
   const [formData, setFormData] = useState({
     startDate: format(new Date(), 'yyyy-MM-dd'),

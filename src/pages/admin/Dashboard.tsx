@@ -7,6 +7,7 @@ import { ptBR } from 'date-fns/locale';
 import { Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
 import Button from '../../components/Button';
 import { Storage } from '../../lib/storage';
+import { Appointment, Client, TimeSlot } from '../../types';
 
 const Dashboard: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
@@ -25,14 +26,16 @@ const Dashboard: React.FC = () => {
   useEffect(() => {
     const loadData = async () => {
       await initializeData();
-      const [storedAppointments, storedClients] = await Promise.all([
+      const [storedAppointments, storedClients, storedTimeSlots] = await Promise.all([
         Storage.getAppointments(),
-        Storage.getClients()
+        Storage.getClients(),
+        Storage.getTimeSlots()
       ]);
-      if (storedAppointments && storedClients) {
+      if (storedAppointments && storedClients && storedTimeSlots) {
         set({ 
           appointments: storedAppointments,
-          clients: storedClients
+          clients: storedClients,
+          timeSlots: storedTimeSlots
         });
       }
     };
