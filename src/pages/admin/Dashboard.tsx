@@ -25,9 +25,15 @@ const Dashboard: React.FC = () => {
   useEffect(() => {
     const loadData = async () => {
       await initializeData();
-      const storedAppointments = await Storage.getAppointments();
-      if (storedAppointments) {
-        set({ appointments: storedAppointments });
+      const [storedAppointments, storedClients] = await Promise.all([
+        Storage.getAppointments(),
+        Storage.getClients()
+      ]);
+      if (storedAppointments && storedClients) {
+        set({ 
+          appointments: storedAppointments,
+          clients: storedClients
+        });
       }
     };
     loadData();
