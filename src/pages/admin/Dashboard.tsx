@@ -22,9 +22,6 @@ const Dashboard: React.FC = () => {
   
   useEffect(() => {
     const loadData = async () => {
-      // Clear existing data first
-      await Storage.resetStore();
-      // Then initialize fresh data
       await initializeData();
     };
     loadData();
