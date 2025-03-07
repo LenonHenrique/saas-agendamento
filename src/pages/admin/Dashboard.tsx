@@ -6,6 +6,7 @@ import { format, parseISO, addDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
 import Button from '../../components/Button';
+import { Storage } from '../../lib/storage';
 
 const Dashboard: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
@@ -17,15 +18,20 @@ const Dashboard: React.FC = () => {
     updateAppointment, 
     cancelAppointment,
     getAppointmentsByDate,
-    initializeData
+    initializeData,
+    set
   } = useAppStore();
   
   useEffect(() => {
     const loadData = async () => {
       await initializeData();
+      const storedAppointments = await Storage.getAppointments();
+      if (storedAppointments) {
+        set({ appointments: storedAppointments });
+      }
     };
     loadData();
-  }, [initializeData]);
+  }, [initializeData, set]);
 
   const formattedDate = format(selectedDate, "yyyy-MM-dd");
   const displayDate = format(selectedDate, "EEEE, dd 'de' MMMM", { locale: ptBR });

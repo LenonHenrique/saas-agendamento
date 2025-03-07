@@ -115,4 +115,17 @@ export class Storage {
     const filteredAppointments = appointments.filter(appointment => appointment.id !== id);
     handleStorage.set(this.APPOINTMENTS_KEY, filteredAppointments);
   }
+
+  static async getBusinessInfo(): Promise<BusinessInfo | null> {
+    return handleStorage.get(this.BUSINESS_INFO_KEY);
+  }
+
+  static async saveBusinessInfo(businessInfo: BusinessInfo): Promise<void> {
+    try {
+      handleStorage.set(this.BUSINESS_INFO_KEY, businessInfo);
+    } catch (error) {
+      console.error('Error saving business info:', error);
+      throw error;
+    }
+  }
 }
