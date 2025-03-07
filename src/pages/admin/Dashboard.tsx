@@ -25,18 +25,24 @@ const Dashboard: React.FC = () => {
   
   useEffect(() => {
     const loadData = async () => {
-      await initializeData();
-      const [storedAppointments, storedClients, storedTimeSlots] = await Promise.all([
-        Storage.getAppointments(),
-        Storage.getClients(),
-        Storage.getTimeSlots()
-      ]);
-      if (storedAppointments && storedClients && storedTimeSlots) {
-        set({ 
-          appointments: storedAppointments,
-          clients: storedClients,
-          timeSlots: storedTimeSlots
-        });
+      try {
+        await initializeData();
+        const [storedAppointments, storedClients, storedTimeSlots] = await Promise.all([
+          Storage.getAppointments(),
+          Storage.getClients(),
+          Storage.getTimeSlots()
+        ]);
+        
+        if (storedAppointments && storedClients && storedTimeSlots) {
+          set({ 
+            appointments: storedAppointments,
+            clients: storedClients,
+            timeSlots: storedTimeSlots
+          });
+        }
+      } catch (error) {
+        console.error('Error loading data:', error);
+        alert('Erro ao carregar dados. Por favor, recarregue a página.');
       }
     };
     loadData();
@@ -47,7 +53,9 @@ const Dashboard: React.FC = () => {
   
   const todayAppointments = appointments.filter(appointment => {
     const timeSlot = timeSlots.find(ts => ts.id === appointment.timeSlotId);
-    return timeSlot && timeSlot.date === formattedDate && appointment.status === 'scheduled';
+    return timeSlot && 
+           timeSlot.date === formattedDate && 
+           appointment.status === 'scheduled';
   });
   
   const handlePreviousDay = () => {
@@ -58,12 +66,28 @@ const Dashboard: React.FC = () => {
     setSelectedDate(prev => addDays(prev, 1));
   };
   
-  const handleCompleteAppointment = (appointmentId: string) => {
-    updateAppointment(appointmentId, { status: 'completed' });
+  const handleCompleteAppointment = async (appointmentId: string) => {
+    try {
+      await updateAppointment(appointmentId, { status: 'completed' });
+      await Storage.saveAppointments(appointments);
+      alert('Agendamento concluído com sucesso!');
+    } catch (error) {
+      console.error('Error completing appointment:', error);
+      alert('Erro ao concluir agendamento. Tente novamente.');
+    }
   };
   
-  const handleCancelAppointment = (appointmentId: string) => {
-    cancelAppointment(appointmentId);
+  const handleCancelAppointment = async (appointmentId: string) => {
+    try {
+      if (window.confirm('Tem certeza que deseja cancelar este agendamento?')) {
+        await cancelAppointment(appointmentId);
+        await Storage.saveAppointments(appointments);
+        alert('Agendamento cancelado com sucesso!');
+      }
+    } catch (error) {
+      console.error('Error canceling appointment:', error);
+      alert('Erro ao cancelar agendamento. Tente novamente.');
+    }
   };
   
   return (
