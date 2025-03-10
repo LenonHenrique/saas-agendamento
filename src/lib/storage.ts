@@ -1,11 +1,14 @@
 import { Client, TimeSlot, Appointment, BusinessInfo } from '../types';
 
-// Helper function to handle storage operations
+// Helper function to handle storage operations with fallback for environments where localStorage is not available
 const handleStorage = {
   get: (key: string) => {
     try {
-      const data = localStorage.getItem(key);
-      return data ? JSON.parse(data) : null;
+      if (typeof window !== 'undefined' && window.localStorage) {
+        const data = localStorage.getItem(key);
+        return data ? JSON.parse(data) : null;
+      }
+      return null;
     } catch (error) {
       console.error(`Error getting data for key ${key}:`, error);
       return null;
@@ -13,14 +16,18 @@ const handleStorage = {
   },
   set: (key: string, value: any) => {
     try {
-      localStorage.setItem(key, JSON.stringify(value));
+      if (typeof window !== 'undefined' && window.localStorage) {
+        localStorage.setItem(key, JSON.stringify(value));
+      }
     } catch (error) {
       console.error(`Error setting data for key ${key}:`, error);
     }
   },
   remove: (key: string) => {
     try {
-      localStorage.removeItem(key);
+      if (typeof window !== 'undefined' && window.localStorage) {
+        localStorage.removeItem(key);
+      }
     } catch (error) {
       console.error(`Error removing data for key ${key}:`, error);
     }
@@ -125,6 +132,24 @@ export class Storage {
       handleStorage.set(this.BUSINESS_INFO_KEY, businessInfo);
     } catch (error) {
       console.error('Error saving business info:', error);
+      throw error;
+    }
+  }
+  
+  static async saveAppointments(appointments: Appointment[]): Promise<void> {
+    try {
+      handleStorage.set(this.APPOINTMENTS_KEY, appointments);
+    } catch (error) {
+      console.error('Error saving appointments:', error);
+      throw error;
+    }
+  }
+  
+  static async saveClients(clients: Client[]): Promise<void> {
+    try {
+      handleStorage.set(this.CLIENTS_KEY, clients);
+    } catch (error) {
+      console.error('Error saving clients:', error);
       throw error;
     }
   }
