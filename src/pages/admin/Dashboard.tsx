@@ -35,27 +35,35 @@ const Dashboard: React.FC = () => {
           Storage.getTimeSlots()
         ]);
         
-        if (storedAppointments && storedClients && storedTimeSlots) {
-          set({ 
-            appointments: storedAppointments,
-            clients: storedClients,
-            timeSlots: storedTimeSlots
-          });
-        }
+        // Initialize with empty arrays if data is not available
+        set({ 
+          appointments: storedAppointments || [],
+          clients: storedClients || [],
+          timeSlots: storedTimeSlots || []
+        });
       } catch (error) {
         console.error('Error loading data:', error);
         alert('Erro ao carregar dados. Por favor, recarregue a página.');
+        // Initialize with empty arrays on error
+        set({
+          appointments: [],
+          clients: [],
+          timeSlots: []
+        });
       } finally {
         setIsLoading(false);
       }
     };
     loadData();
-  }, [initializeData, set]);
+  }, [initializeData, set]);}]}}}
 
   const formattedDate = format(selectedDate, "yyyy-MM-dd");
   const displayDate = format(selectedDate, "EEEE, dd 'de' MMMM", { locale: ptBR });
   
   const todayAppointments = appointments.filter(appointment => {
+    // Add a null check for appointment.timeSlotId
+    if (!appointment || !appointment.timeSlotId) return false;
+    
     const timeSlot = timeSlots.find(ts => ts.id === appointment.timeSlotId);
     return timeSlot && 
            timeSlot.date === formattedDate && 
@@ -147,6 +155,9 @@ const Dashboard: React.FC = () => {
             {todayAppointments.length > 0 ? (
               todayAppointments
                 .sort((a, b) => {
+                  // Add null checks for timeSlotId
+                  if (!a || !a.timeSlotId || !b || !b.timeSlotId) return 0;
+                  
                   const timeSlotA = timeSlots.find(ts => ts.id === a.timeSlotId);
                   const timeSlotB = timeSlots.find(ts => ts.id === b.timeSlotId);
                   if (!timeSlotA || !timeSlotB) return 0;
