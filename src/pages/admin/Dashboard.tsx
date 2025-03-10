@@ -55,7 +55,7 @@ const Dashboard: React.FC = () => {
       }
     };
     loadData();
-  }, [initializeData, set]);}]}}}
+  }, [initializeData, set]);
 
   const formattedDate = format(selectedDate, "yyyy-MM-dd");
   const displayDate = format(selectedDate, "EEEE, dd 'de' MMMM", { locale: ptBR });
