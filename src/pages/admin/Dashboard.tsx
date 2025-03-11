@@ -134,6 +134,33 @@ const Dashboard: React.FC = () => {
     );
   }
   
+  // Prepare appointments data with validation
+  const validAppointments = todayAppointments
+    .filter(appointment => {
+      if (!appointment) return false;
+      
+      const timeSlot = timeSlots.find(ts => ts && ts.id === appointment.timeSlotId);
+      const client = clients.find(c => c && c.id === appointment.clientId);
+      
+      if (!timeSlot) {
+        console.error(`TimeSlot not found for appointment ${appointment.id}`);
+        return false;
+      }
+      
+      if (!client) {
+        console.error(`Client not found for appointment ${appointment.id}`);
+        return false;
+      }
+      
+      return true;
+    })
+    .sort((a, b) => {
+      const timeSlotA = timeSlots.find(ts => ts.id === a.timeSlotId);
+      const timeSlotB = timeSlots.find(ts => ts.id === b.timeSlotId);
+      if (!timeSlotA || !timeSlotB) return 0;
+      return timeSlotA.startTime.localeCompare(timeSlotB.startTime);
+    });
+  
   return (
     <Layout>
       <div className="space-y-6">
@@ -174,36 +201,22 @@ const Dashboard: React.FC = () => {
           </div>
           
           <div className="space-y-4">
-            {todayAppointments.length > 0 ? (
-              todayAppointments
-                .sort((a, b) => {
-                  // Add null checks for timeSlotId
-                  if (!a || !a.timeSlotId || !b || !b.timeSlotId) return 0;
-                  
-                  const timeSlotA = timeSlots.find(ts => ts && ts.id === a.timeSlotId);
-                  const timeSlotB = timeSlots.find(ts => ts && ts.id === b.timeSlotId);
-                  if (!timeSlotA || !timeSlotB) return 0;
-                  return timeSlotA.startTime.localeCompare(timeSlotB.startTime);
-                })
-                .map(appointment => {
-                  if (!appointment) return null;
-                  
-                  const timeSlot = timeSlots.find(ts => ts && ts.id === appointment.timeSlotId);
-                  const client = clients.find(c => c && c.id === appointment.clientId);
-                  
-                  if (!timeSlot || !client) return null;
-                  
-                  return (
-                    <AppointmentCard
-                      key={appointment.id}
-                      appointment={appointment}
-                      timeSlot={timeSlot}
-                      client={client}
-                      onComplete={() => handleCompleteAppointment(appointment.id)}
-                      onCancel={() => handleCancelAppointment(appointment.id)}
-                    />
-                  );
-                })
+            {validAppointments.length > 0 ? (
+              validAppointments.map(appointment => {
+                const timeSlot = timeSlots.find(ts => ts.id === appointment.timeSlotId)!;
+                const client = clients.find(c => c.id === appointment.clientId)!;
+                
+                return (
+                  <AppointmentCard
+                    key={appointment.id}
+                    appointment={appointment}
+                    timeSlot={timeSlot}
+                    client={client}
+                    onComplete={() => handleCompleteAppointment(appointment.id)}
+                    onCancel={() => handleCancelAppointment(appointment.id)}
+                  />
+                );
+              })
             ) : (
               <div className="text-center py-8">
                 <p className="text-gray-500">Não há agendamentos para este dia.</p>
