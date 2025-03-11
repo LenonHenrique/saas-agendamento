@@ -12,6 +12,7 @@ import { Appointment, Client, TimeSlot } from '../../types';
 const Dashboard: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   
   const { 
     appointments, 
@@ -27,6 +28,7 @@ const Dashboard: React.FC = () => {
   useEffect(() => {
     const loadData = async () => {
       setIsLoading(true);
+      setError(null);
       try {
         await initializeData();
         const [storedAppointments, storedClients, storedTimeSlots] = await Promise.all([
@@ -43,7 +45,7 @@ const Dashboard: React.FC = () => {
         });
       } catch (error) {
         console.error('Error loading data:', error);
-        alert('Erro ao carregar dados. Por favor, recarregue a página.');
+        setError('Erro ao carregar dados. Por favor, recarregue a página.');
         // Initialize with empty arrays on error
         set({
           appointments: [],
@@ -60,15 +62,19 @@ const Dashboard: React.FC = () => {
   const formattedDate = format(selectedDate, "yyyy-MM-dd");
   const displayDate = format(selectedDate, "EEEE, dd 'de' MMMM", { locale: ptBR });
   
-  const todayAppointments = appointments.filter(appointment => {
-    // Add a null check for appointment.timeSlotId
+  // Safely filter appointments with proper null checks
+  const todayAppointments = Array.isArray(appointments) ? appointments.filter(appointment => {
+    // Add a null check for appointment and appointment.timeSlotId
     if (!appointment || !appointment.timeSlotId) return false;
     
-    const timeSlot = timeSlots.find(ts => ts.id === appointment.timeSlotId);
+    const timeSlot = Array.isArray(timeSlots) ? 
+      timeSlots.find(ts => ts && ts.id === appointment.timeSlotId) : 
+      undefined;
+      
     return timeSlot && 
            timeSlot.date === formattedDate && 
            (appointment.status === 'scheduled' || appointment.status === 'completed');
-  });
+  }) : [];
   
   const handlePreviousDay = () => {
     setSelectedDate(prev => addDays(prev, -1));
@@ -107,6 +113,22 @@ const Dashboard: React.FC = () => {
       <Layout>
         <div className="flex items-center justify-center h-screen">
           <p className="text-gray-500">Carregando dados...</p>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (error) {
+    return (
+      <Layout>
+        <div className="flex flex-col items-center justify-center h-screen">
+          <p className="text-red-500 mb-4">{error}</p>
+          <Button 
+            variant="primary" 
+            onClick={() => window.location.reload()}
+          >
+            Tentar Novamente
+          </Button>
         </div>
       </Layout>
     );
@@ -158,14 +180,16 @@ const Dashboard: React.FC = () => {
                   // Add null checks for timeSlotId
                   if (!a || !a.timeSlotId || !b || !b.timeSlotId) return 0;
                   
-                  const timeSlotA = timeSlots.find(ts => ts.id === a.timeSlotId);
-                  const timeSlotB = timeSlots.find(ts => ts.id === b.timeSlotId);
+                  const timeSlotA = timeSlots.find(ts => ts && ts.id === a.timeSlotId);
+                  const timeSlotB = timeSlots.find(ts => ts && ts.id === b.timeSlotId);
                   if (!timeSlotA || !timeSlotB) return 0;
                   return timeSlotA.startTime.localeCompare(timeSlotB.startTime);
                 })
                 .map(appointment => {
-                  const timeSlot = timeSlots.find(ts => ts.id === appointment.timeSlotId);
-                  const client = clients.find(c => c.id === appointment.clientId);
+                  if (!appointment) return null;
+                  
+                  const timeSlot = timeSlots.find(ts => ts && ts.id === appointment.timeSlotId);
+                  const client = clients.find(c => c && c.id === appointment.clientId);
                   
                   if (!timeSlot || !client) return null;
                   
