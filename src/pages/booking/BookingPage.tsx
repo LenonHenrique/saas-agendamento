@@ -144,12 +144,15 @@ const BookingPage: React.FC = () => {
     }
     
     try {
-      // Add client
+      // Add client and ensure it's properly saved
       const client = addClient({
         name: clientInfo.name,
         phone: clientInfo.phone,
         email: clientInfo.email,
       });
+      
+      // Log client creation for debugging
+      console.log('Created client:', client);
       
       // Create appointment
       createAppointment({

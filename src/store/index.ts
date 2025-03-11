@@ -177,12 +177,24 @@ export const useAppStore = create<AppState>()((set, get) => ({
   
   // Appointment actions
   createAppointment: async (appointmentData) => {
+    // Verify client exists before creating appointment
+    const clients = get().clients;
+    const clientExists = clients.some(c => c.id === appointmentData.clientId);
+    
+    if (!clientExists) {
+      console.error(`Cannot create appointment: Client with ID ${appointmentData.clientId} not found`);
+      throw new Error('Client not found');
+    }
+    
     const appointment = {
       ...appointmentData,
       id: crypto.randomUUID(),
       createdAt: new Date().toISOString(),
     };
+    
+    // Save appointment to storage
     await Storage.addAppointment(appointment);
+    console.log('Created appointment:', appointment);
 
     set((state) => {
       // Mark the selected time slot as unavailable
@@ -194,12 +206,19 @@ export const useAppStore = create<AppState>()((set, get) => ({
 
       // Save the updated time slots to storage
       Storage.saveTimeSlots(updatedTimeSlots);
+      
+      // Save all appointments to ensure consistency
+      const updatedAppointments = [...state.appointments, appointment];
+      Storage.saveAppointments(updatedAppointments);
 
       return {
-        appointments: [...state.appointments, appointment],
+        appointments: updatedAppointments,
         timeSlots: updatedTimeSlots
       };
     });
+    
+    // Ensure clients are saved to storage
+    await Storage.saveClients(clients);
 
     return appointment;
   },

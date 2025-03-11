@@ -37,6 +37,9 @@ const Dashboard: React.FC = () => {
           Storage.getTimeSlots()
         ]);
         
+        console.log('Loaded clients:', storedClients);
+        console.log('Loaded appointments:', storedAppointments);
+        
         // Initialize with empty arrays if data is not available
         set({ 
           appointments: storedAppointments || [],
@@ -135,6 +138,9 @@ const Dashboard: React.FC = () => {
   }
   
   // Prepare appointments data with validation
+  console.log('All clients available:', clients);
+  console.log('Today appointments before validation:', todayAppointments);
+  
   const validAppointments = todayAppointments
     .filter(appointment => {
       if (!appointment) return false;
@@ -148,7 +154,8 @@ const Dashboard: React.FC = () => {
       }
       
       if (!client) {
-        console.error(`Client not found for appointment ${appointment.id}`);
+        console.error(`Client not found for appointment ${appointment.id}. Client ID: ${appointment.clientId}`);
+        console.log('Available client IDs:', clients.map(c => c.id));
         return false;
       }
       
